@@ -1,5 +1,6 @@
 package cn.nicerpc.provider.handler;
 
+import cn.nicerpc.common.handler.CommonHeartbeatHandler;
 import cn.nicerpc.common.param.ClientRequest;
 import cn.nicerpc.common.param.ServerRequest;
 import cn.nicerpc.provider.medium.Media;
@@ -10,11 +11,16 @@ import io.netty.channel.ChannelInboundHandlerAdapter;
 import io.netty.handler.timeout.IdleState;
 import io.netty.handler.timeout.IdleStateEvent;
 
-public class ServerHandler extends ChannelInboundHandlerAdapter {
+public class ServerHandler extends CommonHeartbeatHandler {
+
+
+    public ServerHandler() {
+        super("server-handler");
+    }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        ClientRequest request = JSON.parseObject(msg.toString(), ClientRequest.class);
+    protected void handleData(ChannelHandlerContext channelHandlerContext, String msg) {
+        ClientRequest request = JSON.parseObject(msg, ClientRequest.class);
 
         Media media = Media.newInstance();
         Object o = media.process(request);
@@ -23,23 +29,18 @@ public class ServerHandler extends ChannelInboundHandlerAdapter {
         response.setId(request.getId());
         response.setResult(o);
 
-        ctx.channel().writeAndFlush(JSON.toJSONString(response));
-        ctx.channel().writeAndFlush("\r\n");
+        channelHandlerContext.channel().writeAndFlush(JSON.toJSONString(response));
+        channelHandlerContext.channel().writeAndFlush("\r\n");
     }
 
+    /**
+     * 服务端关注READER_IDLE
+     * @param ctx
+     */
     @Override
-    public void userEventTriggered(ChannelHandlerContext ctx, Object evt) throws Exception {
-        if (evt instanceof IdleStateEvent) {
-            IdleStateEvent event = (IdleStateEvent)evt;
-            if (event.state().equals(IdleState.READER_IDLE)) {
-                System.out.println("读空闲==");
-                ctx.channel().close();
-            } else if (event.equals(IdleState.WRITER_IDLE)) {
-                System.out.println("写空闲==");
-            } else if (event.equals(IdleState.ALL_IDLE)) {
-                System.out.println("读写空闲==");
-                ctx.channel().writeAndFlush("ping\r\n");
-            }
-        }
+    protected void handleReaderIdle(ChannelHandlerContext ctx) {
+        super.handleReaderIdle(ctx);
+        System.err.println("---client " + ctx.channel().remoteAddress().toString() + " reader timeout, close it---");
+        ctx.close();
     }
 }

@@ -49,6 +49,7 @@ public class InvokeProxy implements BeanPostProcessor {
                         request.setMethodName(method.getName());
                         request.setServiceType(methodClassMap.get(method).getName());
                         request.setCategory("consumers");
+
                         Response response = TCPClient.send(request);
 
                         return response.getResult(method.getReturnType());

@@ -59,17 +59,7 @@ public class NettyInital implements ApplicationListener<ContextRefreshedEvent> {
                     });
             ChannelFuture sync = bootstrap.bind(port).sync();
             System.out.println("服务器启动成功。。。");
-
-//            register2Registry();
-
-//            CuratorFramework client = ZookeeperFactory.create();
-
-//            InetAddress inetAddress = InetAddress.getLocalHost();
             System.out.println("服务器ip：" + host + " 端口号 " + port);
-//            client.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
-//                    .forPath(Constants.SERVER_PATH + inetAddress.getHostAddress() + "#" + port + "#");
-//            System.out.println("服务器注册Zookeeper节点成功。。。");
-
             sync.channel().closeFuture().sync();
             System.out.println("服务器已优雅关闭。。。");
         } catch (Exception e) {

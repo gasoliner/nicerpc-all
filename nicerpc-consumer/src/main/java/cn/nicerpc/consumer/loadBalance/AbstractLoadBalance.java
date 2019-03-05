@@ -1,23 +1,24 @@
 package cn.nicerpc.consumer.loadBalance;
 
 import cn.nicerpc.common.param.ClientRequest;
+import cn.nicerpc.consumer.invoke.Invoker;
 
 import java.util.List;
 
 public abstract class AbstractLoadBalance implements LoadBalance {
 
     @Override
-    public String select(List<String> servers, ClientRequest request) {
-        if (servers == null || servers.size() == 0) {
+    public Invoker select(List<Invoker> invokers, ClientRequest request) {
+        if (invokers == null || invokers.size() == 0) {
             return null;
         }
-        if (servers.size() == 1) {
-            return servers.get(0);
+        if (invokers.size() == 1) {
+            return invokers.get(0);
         }
-        return doSelect(servers, request);
+        return doSelect(invokers, request);
     }
 
-    protected abstract String doSelect(List<String> servers, ClientRequest request);
+    protected abstract Invoker doSelect(List<Invoker> servers, ClientRequest request);
 
 
 }

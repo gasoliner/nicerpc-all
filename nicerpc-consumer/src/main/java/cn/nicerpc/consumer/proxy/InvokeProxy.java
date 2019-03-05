@@ -1,8 +1,13 @@
 package cn.nicerpc.consumer.proxy;
 
+import cn.nicerpc.consumer.invoke.InvokerManager;
 import cn.nicerpc.consumer.core.TCPClient;
 import cn.nicerpc.common.param.ClientRequest;
 import cn.nicerpc.common.param.Response;
+import cn.nicerpc.consumer.invoke.Invoker;
+import cn.nicerpc.consumer.loadBalance.LoadBalance;
+import cn.nicerpc.consumer.loadBalance.LoadBalanceManager;
+import cn.nicerpc.consumer.filter.*;
 import org.springframework.beans.BeansException;
 import org.springframework.beans.factory.config.BeanPostProcessor;
 import org.springframework.cglib.proxy.Enhancer;
@@ -13,8 +18,11 @@ import cn.nicerpc.common.annotation.*;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class InvokeProxy implements BeanPostProcessor {
@@ -26,6 +34,21 @@ public class InvokeProxy implements BeanPostProcessor {
                 fields) {
             if (f.isAnnotationPresent(RemoteInvoke.class)) {
                 f.setAccessible(true);
+
+                String serviceName = f.getType().getName();
+                RemoteInvoke remoteInvoke = f.getAnnotation(RemoteInvoke.class);
+                Class[] filters = remoteInvoke.filter();
+                Class loadBalance = remoteInvoke.loadBalance();
+                Class invokeStrategy = remoteInvoke.invokeStrategy();
+//                注册filter
+                FilterManager.registerFilter(serviceName,filters);
+//                注册loadBalance
+                LoadBalanceManager.registerLoadBalance(serviceName,loadBalance);
+//                注册invoker
+                InvokerManager.registerInvoker(serviceName,invokeStrategy);
+
+
+
 
 //                todo 改掉这种方式需要
                 final Map<Method,Class> methodClassMap = new HashMap<>();
@@ -39,19 +62,27 @@ public class InvokeProxy implements BeanPostProcessor {
                 enhancer.setCallback(new MethodInterceptor() {
                     @Override
                     public Object intercept(Object o, Method method, Object[] objects, MethodProxy methodProxy) throws Throwable {
-//                        采用netty客户端调用服务器
+                       /**一次rpc请求开始**/
+//                        String serviceType = methodClassMap.get(method).getName();
+                        String serviceType = o.getClass().getInterfaces()[0].getName();
+//                        组装一次请求
                         ClientRequest request = new ClientRequest();
-                        request.setCommand(methodClassMap.get(method).getName() + "." + method.getName());
-//                        todo 多个参数应该用map，应该把invoke抽象出来
+                        request.setCommand(serviceType + "." + method.getName());
                         if (objects.length != 0) {
                             request.setContent(objects[0]);
                         }
                         request.setMethodName(method.getName());
-                        request.setServiceType(methodClassMap.get(method).getName());
+                        request.setServiceType(serviceType);
                         request.setCategory("consumers");
 
-                        Response response = TCPClient.send(request);
-
+//                        获取invoker
+                        List<Invoker> invokers = InvokerManager.get(serviceType);
+//                        负载均衡
+                        Invoker invoker = LoadBalanceManager.select(serviceType,invokers,request);
+//                        构建filter链
+                        invoker = FilterManager.buildFilterChain(serviceType,invoker);
+                        Response response = invoker.invoke(request);
+                        /**一次rpc请求结束**/
                         return response.getResult(method.getReturnType());
                     }
                 });

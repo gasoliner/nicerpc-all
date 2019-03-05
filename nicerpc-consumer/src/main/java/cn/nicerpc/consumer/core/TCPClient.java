@@ -7,10 +7,7 @@ import cn.nicerpc.common.param.ClientRequest;
 import cn.nicerpc.common.param.Response;
 import com.alibaba.fastjson.JSON;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelInitializer;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.EventLoopGroup;
+import io.netty.channel.*;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
@@ -18,21 +15,41 @@ import io.netty.handler.codec.DelimiterBasedFrameDecoder;
 import io.netty.handler.codec.Delimiters;
 import io.netty.handler.codec.string.StringDecoder;
 import io.netty.handler.codec.string.StringEncoder;
-import org.apache.curator.framework.CuratorFramework;
 
-import java.util.List;
-import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 
 public class TCPClient {
 
-    static final Bootstrap b = new Bootstrap();
-    static ChannelFuture f;
-    static {
+    public static TCPClient getInstance(String host, int port, int timeout) throws Exception {
+        String key = host + "#" + port;
+        TCPClient client = clientMap.get(key);
+        if (client != null && client.channel.isActive()) {
+            return client;
+        }
+        if (client != null) {
+//            断线
+            client.channel.close();
+            client.channel = null;
+            clientMap.remove(key);
+        }
+        client = new TCPClient(host, port, timeout);
+        clientMap.put(key, client);
+        return client;
+    }
+
+    private static final ConcurrentHashMap<String, TCPClient> clientMap =
+            new ConcurrentHashMap<>();
+
+    private Bootstrap bootstrap = new Bootstrap();
+    private volatile Channel channel;
+
+    private TCPClient(String host, int port, int timeout) throws Exception {
         EventLoopGroup workerGroup = new NioEventLoopGroup();
-        b.group(workerGroup); // (2)
-        b.channel(NioSocketChannel.class); // (3)
-        b.option(ChannelOption.SO_KEEPALIVE, true); // (4)
-        b.handler(new ChannelInitializer<SocketChannel>() {
+        bootstrap.group(workerGroup); // (2)
+        bootstrap.channel(NioSocketChannel.class); // (3)
+        bootstrap.option(ChannelOption.SO_KEEPALIVE, true); // (4)
+        bootstrap.handler(new ChannelInitializer<SocketChannel>() {
             @Override
             public void initChannel(SocketChannel ch) throws Exception {
                 ch.pipeline().addLast(new DelimiterBasedFrameDecoder(Integer.MAX_VALUE, Delimiters.lineDelimiter()[0]));
@@ -41,70 +58,47 @@ public class TCPClient {
                 ch.pipeline().addLast(new StringEncoder());
             }
         });
+        doConnect(host, port, timeout);
+    }
 
-//        host-port设置默认值
-//        String host = "localhost";
-//        int port = 8081;
+    private void doConnect(String host, int port, int timeout) throws Exception {
+        ChannelFuture connect = bootstrap.connect(host, port);
 
-//        CuratorFramework client = ZookeeperFactory.create();
-//        try {
-//            List<String> serverPaths = client.getChildren().forPath(Constants.SERVER_PATH);
-
-//            ServerWatcher watcher = new ServerWatcher();
-//            client.getChildren().usingWatcher(watcher).forPath(Constants.SERVER_PATH);
-
-//            Set<String> realServerPath = ServerManager.realServerPathSet;
-//            for (String seq :
-//                    serverPaths) {
-//                System.out.println("TCPClient static serverPath seq == " + seq);
-//                String [] serverInfoArray = seq.split("#");
-//                realServerPath.add(serverInfoArray[0]+ "#" + serverInfoArray[1]);
-//            }
-//            if (realServerPath.size() > 0) {
-////                选择一台服务器，这里可以扩展，采用轮训，加权轮训等负载均衡算法
-//
-//                ChannelFuture channelFuture = ServerManager.get();
-//
-//                String[] serverInfo = realServer.toArray()[0].toString().split("#");
-//                host = serverInfo[0];
-//                port = Integer.parseInt(serverInfo[1]);
-//                System.out.println("新的服务器确认，host : " + host + " port : " + port);
-//            }
-
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//        try {
-//            f = b.connect(host, port).sync();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
+        boolean ret = connect.awaitUninterruptibly(timeout, TimeUnit.MILLISECONDS);
+        if (ret && connect.isSuccess()) {
+//                关闭老连接
+            Channel oldChannel = TCPClient.this.channel;
+            if (oldChannel != null) {
+                try {
+                    oldChannel.close();
+                } finally {
+                    //doSomething
+                }
+            }
+            TCPClient.this.channel = connect.channel();
+        } else {
+            throw new Exception("remote connect failed host = " + host + " port = " + port);
+        }
     }
 
     /**
      * 发送数据
      * 1、每一个请求都是同一个连接，会有并发问题，所以有以下解决方式：
-     *      使用请求id、响应id来区分
-     *      请求：
-     *      1.请求id
-     *      2.请求内容
-     *      响应：
-     *      1.响应id
-     *      2.响应内容
+     * 使用请求id、响应id来区分
+     * 请求：
+     * 1.请求id
+     * 2.请求内容
+     * 响应：
+     * 1.响应id
+     * 2.响应内容
+     *
      * @param request
      * @return
      */
-    public static Response send(ClientRequest request) {
-        try {
-            f = ServerManager.get(request);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return new Response();
-        }
-
+    public Response send(ClientRequest request) {
 //        todo 扩展多种编码方式
-        f.channel().writeAndFlush(JSON.toJSONString(request));
-        f.channel().writeAndFlush("\r\n");
+        channel.writeAndFlush(JSON.toJSONString(request));
+        channel.writeAndFlush("\r\n");
 
         DefaultFuture future = new DefaultFuture(request);
         return future.get();

@@ -1,5 +1,6 @@
 package cn.nicerpc.consumer.loadBalance.impl;
 
+import cn.nicerpc.consumer.invoke.Invoker;
 import cn.nicerpc.consumer.loadBalance.AbstractLoadBalance;
 import cn.nicerpc.common.param.ClientRequest;
 
@@ -11,7 +12,7 @@ public class RandomLoadBalance extends AbstractLoadBalance {
     private final Random random = new Random();
 
     @Override
-    protected String doSelect(List<String> servers, ClientRequest request) {
+    protected Invoker doSelect(List<Invoker> servers, ClientRequest request) {
         int size = servers.size();
         return servers.get(random.nextInt(size));
     }

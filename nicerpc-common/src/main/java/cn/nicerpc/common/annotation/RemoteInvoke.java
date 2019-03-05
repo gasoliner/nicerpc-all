@@ -9,4 +9,7 @@ import java.lang.annotation.*;
 @Documented
 @Component
 public @interface RemoteInvoke {
+    Class[] filter();
+    Class loadBalance();
+    Class invokeStrategy();
 }

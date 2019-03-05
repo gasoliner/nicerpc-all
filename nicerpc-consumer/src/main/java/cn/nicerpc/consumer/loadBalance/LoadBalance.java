@@ -1,11 +1,12 @@
 package cn.nicerpc.consumer.loadBalance;
 
 import cn.nicerpc.common.param.ClientRequest;
+import cn.nicerpc.consumer.invoke.Invoker;
 
 import java.util.List;
 
 public interface LoadBalance {
 
-    String select(List<String> servers, ClientRequest request);
+    Invoker select(List<Invoker> servers, ClientRequest request);
 
 }

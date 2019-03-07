@@ -4,6 +4,7 @@ import cn.nicerpc.common.constant.Constants;
 import cn.nicerpc.common.param.ClientRequest;
 import cn.nicerpc.common.zk.ZookeeperFactory;
 import cn.nicerpc.registry.support.AbstractRegistry;
+import com.alibaba.fastjson.JSON;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.zookeeper.CreateMode;
 
@@ -24,7 +25,8 @@ public class DefaultRegistry extends AbstractRegistry {
                 checkServicePathIsExist(parentPath);
 //                注册自己代表的服务
                 client.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
-                        .forPath(parentPath + "/providers/" + request.getHost() + "#" + request.getPort() + "#");
+                        .forPath(parentPath + "/providers/" + request.getHost() + "#" + request.getPort() + "#"
+                        , JSON.toJSONString(request).getBytes());
             } catch (Exception e) {
                 e.printStackTrace();
             }

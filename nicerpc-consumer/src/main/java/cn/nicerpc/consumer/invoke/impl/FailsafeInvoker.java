@@ -6,11 +6,10 @@ import cn.nicerpc.consumer.core.TCPClient;
 import cn.nicerpc.consumer.invoke.AbstractInvoker;
 
 /**
- * 快速失败，只发起一次调用，失败立即报错
- * @param <T>
+ * failsafe，失败安全
+ *  invoke异常后，忽略异常，常用于允许丢失一定信息量的操作，比如写入审计日志等操作
  */
-public class FailfastInvoker<T> extends AbstractInvoker<T> {
-
+public class FailsafeInvoker extends AbstractInvoker {
     @Override
     protected Response doInvoke(ClientRequest invocation) throws Exception {
         ClientRequest selfInfo = getInvocation();
@@ -19,7 +18,8 @@ public class FailfastInvoker<T> extends AbstractInvoker<T> {
             Response response = client.send(invocation);
             return response;
         } catch (Exception e) {
-            throw e;
+            System.out.println("Failsafe throw e, ignore this exception , e :" + e.getCause());
+            return new Response();
         }
     }
 }

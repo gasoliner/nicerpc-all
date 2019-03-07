@@ -1,6 +1,7 @@
 package cn.nicerpc.consumer.core;
 
 import cn.nicerpc.common.zk.ZookeeperFactory;
+import cn.nicerpc.consumer.invoke.InvokerManager;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.api.CuratorWatcher;
 import org.apache.zookeeper.WatchedEvent;
@@ -18,16 +19,8 @@ public class ServerWatcher implements CuratorWatcher {
 
         System.out.println("ServerWatcher process serviceType == " + serviceType);
         List<String> serverPaths = client.getChildren().forPath(path);
-        ServerManager.clear(serviceType);
-        for (String serverPath :
-                serverPaths) {
-            String [] serverInfoArray = serverPath.split("#");
-            ServerManager.addServer(serviceType,serverInfoArray[0]+ "#" + serverInfoArray[1]);
+//        ServerManager.clear(serviceType);
 
-//            ChannelFuture channelFuture = TCPClient.b.connect(host, port);
-//            ChannelManager.addChannel(channelFuture);
-
-        }
-
+        InvokerManager.updateInvoker(serviceType,serverPaths);
     }
 }

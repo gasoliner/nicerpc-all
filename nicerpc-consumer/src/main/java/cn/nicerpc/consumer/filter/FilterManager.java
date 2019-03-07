@@ -13,11 +13,15 @@ public class FilterManager {
     private static final ConcurrentHashMap<String, List<Filter>> filterManagerMap =
             new ConcurrentHashMap<>();
 
-    public static void registerFilter(String serviceName, Class[] filters) {
+    public static void registerFilterIfNeed(String serviceName, Class[] filters) {
         if (filterManagerMap.containsKey(serviceName)) {
             return;
         }
         List<Filter> filterList = new ArrayList<>();
+        /**
+         * 如果有默认的、需要优先启动的过滤器应该在这里提前加入
+         * filterList.add(DefaultFilter...);
+         */
         try {
             for (Class temp :
                     filters) {
@@ -33,7 +37,7 @@ public class FilterManager {
     public static Invoker buildFilterChain(String serviceType, Invoker invoker) throws Exception {
         List<Filter> filters = filterManagerMap.get(serviceType);
         if (CollectionUtils.isEmpty(filters)) {
-            throw new Exception("FilterManager buildFilterChain filters must not be null !");
+            return invoker;
         }
         Invoker last = invoker;
         for (int i = filters.size() - 1; i >= 0; i--) {
@@ -54,11 +58,15 @@ public class FilterManager {
 
                 @Override
                 public ClientRequest getInvocation() {
-                    return null;
+                    return invoker.getInvocation();
                 }
 
                 @Override
                 public void setInvocation(ClientRequest invocation) {
+                }
+
+                @Override
+                public void setId(String id) {
                 }
             };
         }

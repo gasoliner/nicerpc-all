@@ -19,4 +19,7 @@ public interface Invoker<T> {
     ClientRequest getInvocation();
 
     void setInvocation(ClientRequest invocation);
+
+    void setId(String id);
+
 }

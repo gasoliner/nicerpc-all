@@ -1,6 +1,8 @@
 package cn.nicerpc.nicerpc_demo.consumer;
 
 import cn.nicerpc.common.annotation.RemoteInvoke;
+import cn.nicerpc.consumer.invoke.impl.FailoverInvoker;
+import cn.nicerpc.consumer.loadBalance.impl.WeightRandomLoadBalance;
 import cn.nicerpc.nicerpc_demo.api.CatService;
 import cn.nicerpc.nicerpc_demo.api.DogService;
 import cn.nicerpc.nicerpc_demo.api.UserService;
@@ -11,13 +13,13 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class SheldonController {
 
-    @RemoteInvoke
+    @RemoteInvoke(filter = {},loadBalance = WeightRandomLoadBalance.class,invokeStrategy = FailoverInvoker.class)
     private UserService userService;
 
-    @RemoteInvoke
+    @RemoteInvoke(filter = {},loadBalance = WeightRandomLoadBalance.class,invokeStrategy = FailoverInvoker.class)
     private CatService catService;
 
-    @RemoteInvoke
+    @RemoteInvoke(filter = {},loadBalance = WeightRandomLoadBalance.class,invokeStrategy = FailoverInvoker.class)
     private DogService dogService;
 
     public void testService() {

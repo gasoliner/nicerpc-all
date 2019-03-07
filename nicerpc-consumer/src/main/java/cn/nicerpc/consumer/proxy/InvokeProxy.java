@@ -1,5 +1,6 @@
 package cn.nicerpc.consumer.proxy;
 
+import cn.nicerpc.consumer.core.RpcRun;
 import cn.nicerpc.consumer.invoke.InvokerManager;
 import cn.nicerpc.consumer.core.TCPClient;
 import cn.nicerpc.common.param.ClientRequest;
@@ -41,11 +42,11 @@ public class InvokeProxy implements BeanPostProcessor {
                 Class loadBalance = remoteInvoke.loadBalance();
                 Class invokeStrategy = remoteInvoke.invokeStrategy();
 //                注册filter
-                FilterManager.registerFilter(serviceName,filters);
+                FilterManager.registerFilterIfNeed(serviceName,filters);
 //                注册loadBalance
-                LoadBalanceManager.registerLoadBalance(serviceName,loadBalance);
+                LoadBalanceManager.registerLoadBalanceIfNeed(serviceName,loadBalance);
 //                注册invoker
-                InvokerManager.registerInvoker(serviceName,invokeStrategy);
+                InvokerManager.registerInvokerIfNeed(serviceName,invokeStrategy);
 
 
 
@@ -75,18 +76,11 @@ public class InvokeProxy implements BeanPostProcessor {
                         request.setServiceType(serviceType);
                         request.setCategory("consumers");
 
-//                        获取invoker
-                        List<Invoker> invokers = InvokerManager.get(serviceType);
-//                        负载均衡
-                        Invoker invoker = LoadBalanceManager.select(serviceType,invokers,request);
-//                        构建filter链
-                        invoker = FilterManager.buildFilterChain(serviceType,invoker);
-                        Response response = invoker.invoke(request);
+                        Response response = RpcRun.rpc(serviceType,request);
                         /**一次rpc请求结束**/
                         return response.getResult(method.getReturnType());
                     }
                 });
-
                 try {
                     f.set(o,enhancer.create());
                 } catch (IllegalAccessException e) {

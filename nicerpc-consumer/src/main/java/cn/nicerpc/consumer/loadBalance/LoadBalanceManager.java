@@ -10,7 +10,7 @@ public class LoadBalanceManager {
     private static final ConcurrentHashMap<String, LoadBalance> loadBalanceManagerMap =
             new ConcurrentHashMap<>();
 
-    public static void registerLoadBalance (String serviceName, Class loadBalance) {
+    public static void registerLoadBalanceIfNeed (String serviceName, Class loadBalance) {
         if (loadBalanceManagerMap.containsKey(serviceName)) {
             return;
         }

@@ -1,6 +1,7 @@
 package cn.nicerpc.common.param;
 
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class ClientRequest {
@@ -22,6 +23,8 @@ public class ClientRequest {
     private String methodName;
 
     private Map<String,String> parameters;
+
+    private Map<String, AtomicInteger> methodActiveMap;
 
     private final AtomicLong aid = new AtomicLong(1);
 
@@ -97,4 +100,11 @@ public class ClientRequest {
         this.port = port;
     }
 
+    public Map<String, AtomicInteger> getMethodActiveMap() {
+        return methodActiveMap;
+    }
+
+    public void setMethodActiveMap(Map<String, AtomicInteger> methodActiveMap) {
+        this.methodActiveMap = methodActiveMap;
+    }
 }

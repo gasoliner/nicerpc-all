@@ -13,6 +13,13 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
 
     private ClientRequest invocation;
 
+    /**
+     * 一个invoker的唯一标识
+     *  格式：
+     *      host#port#serviceName
+     */
+    protected String id;
+
     @Override
     public ClientRequest getInvocation() {
         return invocation;
@@ -28,5 +35,31 @@ public abstract class AbstractInvoker<T> implements Invoker<T> {
         return doInvoke(invocation);
     }
 
+    @Override
+    public void setId(String id) {
+        this.id = id;
+    }
+
+    /**
+     * 重新hashcode
+     * @return
+     */
+    @Override
+    public int hashCode() {
+        return this.id.hashCode();
+    }
+
+    /**
+     * 重写equals
+     * @param obj
+     * @return
+     */
+    @Override
+    public boolean equals(Object obj) {
+        AbstractInvoker invoker = (AbstractInvoker) obj;
+        return this.id.equals(invoker.id);
+    }
+
     protected abstract Response doInvoke(ClientRequest invocation) throws Exception;
+
 }

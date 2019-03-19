@@ -18,5 +18,10 @@ public class SheldonControllerTest {
     @Test
     public void test1() {
         sheldonController.testService();
+        try {
+            Thread.sleep(1000*60*10);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -52,7 +52,7 @@ public class FilterManager {
             Invoker next = last;
             last = new Invoker() {
                 @Override
-                public Response invoke(ClientRequest invocation) {
+                public Response invoke(ClientRequest invocation) throws Exception {
                     return filter.invoke(next,invocation);
                 }
 

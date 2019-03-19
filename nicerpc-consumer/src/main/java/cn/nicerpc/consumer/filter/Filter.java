@@ -11,5 +11,5 @@ public interface Filter {
      * @param invocation 本次执行rpc封装参数的ClientRequest
      * @return
      */
-    Response invoke(Invoker<?> invoker, ClientRequest invocation);
+    Response invoke(Invoker<?> invoker, ClientRequest invocation) throws Exception;
 }

@@ -6,6 +6,7 @@ import cn.nicerpc.consumer.loadBalance.impl.WeightRandomLoadBalance;
 import cn.nicerpc.nicerpc_demo.api.CatService;
 import cn.nicerpc.nicerpc_demo.api.DogService;
 import cn.nicerpc.nicerpc_demo.api.UserService;
+import cn.nicerpc.nicerpc_demo.consumer.filter.CheckInvocationFilter;
 import cn.nicerpc.nicerpc_demo.consumer.filter.TestFilter;
 import cn.nicerpc.nicerpc_demo.model.SomeThing;
 import com.alibaba.fastjson.JSON;
@@ -14,7 +15,7 @@ import org.springframework.stereotype.Controller;
 @Controller
 public class SheldonController {
 
-    @RemoteInvoke(filter = {TestFilter.class},loadBalance = WeightRandomLoadBalance.class,invokeStrategy = FailoverInvoker.class)
+    @RemoteInvoke(filter = {TestFilter.class, CheckInvocationFilter.class},loadBalance = WeightRandomLoadBalance.class,invokeStrategy = FailoverInvoker.class)
     private UserService userService;
 
     @RemoteInvoke(filter = {},loadBalance = WeightRandomLoadBalance.class,invokeStrategy = FailoverInvoker.class)

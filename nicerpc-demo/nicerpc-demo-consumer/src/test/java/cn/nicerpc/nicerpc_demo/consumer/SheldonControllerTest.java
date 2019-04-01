@@ -8,8 +8,7 @@ import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@ContextConfiguration(classes = SheldonControllerTest.class)
-@ComponentScan("cn.nicerpc.consumer,cn.nicerpc.nicerpc_demo.consumer")
+@ContextConfiguration(locations = "classpath:/spring/spring-rpc.xml")
 public class SheldonControllerTest {
 
     @Autowired

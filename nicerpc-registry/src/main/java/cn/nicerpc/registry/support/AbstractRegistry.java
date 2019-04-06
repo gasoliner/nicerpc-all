@@ -13,7 +13,7 @@ public abstract class AbstractRegistry implements Registry {
         doRegister(request);
     }
 
-    public abstract void doRegister(ClientRequest request);
+    protected abstract void doRegister(ClientRequest request);
 
     @Override
     public void unRegister(ClientRequest request) {

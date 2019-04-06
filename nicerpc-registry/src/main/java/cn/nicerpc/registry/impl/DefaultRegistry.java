@@ -18,11 +18,15 @@ public class DefaultRegistry extends AbstractRegistry {
 
         String parentPath = Constants.SERVER_PATH + "/" + request.getServiceType();
 
+        try {
+            checkServicePathIsExist(parentPath);
+        } catch (Exception e) {
+        }
+
         if (request.getCategory().equals("provider")) {
 
 
             try {
-                checkServicePathIsExist(parentPath);
 //                注册自己代表的服务
                 client.create().withMode(CreateMode.EPHEMERAL_SEQUENTIAL)
                         .forPath(parentPath + "/providers/" + request.getHost() + "#" + request.getPort() + "#"

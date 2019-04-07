@@ -13,7 +13,7 @@ public class ServerWatcher implements CuratorWatcher {
     public void process(WatchedEvent watchedEvent) throws Exception {
         CuratorFramework client = ZookeeperFactory.create();
         String path = watchedEvent.getPath();
-        client.getChildren().usingWatcher(this);
+        client.getChildren().usingWatcher(this).forPath(path);
 
         String serviceType = path.split("/")[1];
 
